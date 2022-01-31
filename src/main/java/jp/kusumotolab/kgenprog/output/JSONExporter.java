@@ -16,6 +16,7 @@ import jp.kusumotolab.kgenprog.ga.variant.Variant;
 import jp.kusumotolab.kgenprog.ga.variant.VariantStore;
 import jp.kusumotolab.kgenprog.project.test.TestResult;
 import jp.kusumotolab.kgenprog.project.test.TestResults;
+import jp.kusumotolab.kgenprog.fl.Suspiciousness;
 
 /**
  * 個体の履歴をJSONファイルに出力するクラス
@@ -54,6 +55,7 @@ class JSONExporter implements Exporter {
     final GsonBuilder gsonBuilder = new GsonBuilder();
     return gsonBuilder.registerTypeAdapter(VariantStore.class, new VariantStoreSerializer())
         .registerTypeHierarchyAdapter(Variant.class, new VariantSerializer())
+        .registerTypeHierarchyAdapter(Suspiciousness.class, new SuspiciousnessSerializer())
         .registerTypeHierarchyAdapter(TestResults.class, new TestResultsSerializer())
         .registerTypeHierarchyAdapter(TestResult.class, new TestResultSerializer())
         .registerTypeHierarchyAdapter(HistoricalElement.class, new HistoricalElementSerializer())

@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import jp.kusumotolab.kgenprog.ga.variant.Variant;
+import jp.kusumotolab.kgenprog.fl.Suspiciousness;
 
 /**
  * Variantをシリアライズするクラス.<br>
@@ -113,6 +114,7 @@ public class VariantSerializer implements JsonSerializer<Variant> {
     serializedVariant.add("patch", context.serialize(patch));
     serializedVariant.add("operation", context.serialize(variant.getHistoricalElement()));
     serializedVariant.add("testSummary", context.serialize(variant.getTestResults()));
+    serializedVariant.add("suspiciousnesses", context.serialize(variant.getSuspiciousnesses()));
 
     return serializedVariant;
   }

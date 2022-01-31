@@ -84,7 +84,8 @@ public class VariantSerializerTest {
         JsonKeyAlias.Variant.PATCH, //
         JsonKeyAlias.Variant.IS_SYNTAX_VALID, //
         JsonKeyAlias.Variant.SOURCE_CODE, //
-        JsonKeyAlias.Variant.BASES);
+        JsonKeyAlias.Variant.BASES, //
+        JsonKeyAlias.Variant.SUSPICIOUSNESSES);
 
     // 各値のチェック
     final JsonElement id = serializedVariant.get(JsonKeyAlias.Variant.ID);

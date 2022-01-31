@@ -31,6 +31,7 @@ public class JsonKeyAlias {
     public final static String OPERATION = "operation";
     public final static String TEST_SUMMARY = "testSummary";
     public final static String BASES = "bases";
+    public final static String SUSPICIOUSNESSES = "suspiciousnesses";
   }
 
   public static class Base {
