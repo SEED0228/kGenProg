@@ -83,6 +83,7 @@ public class VariantSerializerTest {
         JsonKeyAlias.Variant.SELECTION_COUNT, //
         JsonKeyAlias.Variant.PATCH, //
         JsonKeyAlias.Variant.IS_SYNTAX_VALID, //
+        JsonKeyAlias.Variant.SOURCE_CODE, //
         JsonKeyAlias.Variant.BASES);
 
     // 各値のチェック

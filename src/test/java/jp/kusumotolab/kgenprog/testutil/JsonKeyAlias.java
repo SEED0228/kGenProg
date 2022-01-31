@@ -26,6 +26,7 @@ public class JsonKeyAlias {
     public final static String FITNESS = "fitness";
     public final static String IS_BUILD_SUCCESS = "isBuildSuccess";
     public final static String IS_SYNTAX_VALID = "isSyntaxValid";
+    public final static String SOURCE_CODE = "sourceCode";
     public final static String PATCH = "patch";
     public final static String OPERATION = "operation";
     public final static String TEST_SUMMARY = "testSummary";

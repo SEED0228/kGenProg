@@ -107,6 +107,7 @@ public class VariantSerializer implements JsonSerializer<Variant> {
     serializedVariant.addProperty("fitness", fitness);
     serializedVariant.addProperty("isBuildSuccess", variant.isBuildSucceeded());
     serializedVariant.addProperty("isSyntaxValid", variant.isSyntaxValid());
+    serializedVariant.addProperty("sourceCode", variant.getGeneratedSourceCode().getProductAsts().size() != 0 ? variant.getGeneratedSourceCode().getProductAsts().get(0).getSourceCode() : "NaN");
     serializedVariant.add("bases", context.serialize(variant.getGene()
         .getBases()));
     serializedVariant.add("patch", context.serialize(patch));
