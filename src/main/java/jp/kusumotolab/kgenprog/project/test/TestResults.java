@@ -1,6 +1,5 @@
 package jp.kusumotolab.kgenprog.project.test;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -8,11 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import com.google.gson.GsonBuilder;
-import jp.kusumotolab.kgenprog.output.CoverageSerializer;
-import jp.kusumotolab.kgenprog.output.FullyQualifiedNameSerializer;
-import jp.kusumotolab.kgenprog.output.PathSerializer;
-import jp.kusumotolab.kgenprog.output.TestResultSerializerForDebug;
 import jp.kusumotolab.kgenprog.project.ASTLocation;
 import jp.kusumotolab.kgenprog.project.FullyQualifiedName;
 import jp.kusumotolab.kgenprog.project.LineNumberRange;
@@ -261,32 +255,30 @@ public class TestResults {
   }
 
   /**
+   * jsonシリアライザ
+   *
+   * @return
+   */
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("[\n");
+    sb.append(String.join(",\n", this.value.values()
+        .stream()
+        .map(v -> v.toString(2))
+        .collect(Collectors.toList())));
+    sb.append("\n");
+    sb.append("]\n");
+    return sb.toString();
+  }
+
+  /**
    * ビルドの結果 (分散に使用)
    *
    * @return
    */
   public BuildResults getBuildResults() {
     return buildResults;
-  }
-
-  /**
-   * テスト実行時間
-   *
-   * @return
-   */
-  public double getTestTime() {
-    return this.testExecTime;
-  }
-
-  @Override
-  public String toString() {
-    return new GsonBuilder().setPrettyPrinting()
-        .registerTypeHierarchyAdapter(Path.class, new PathSerializer())
-        .registerTypeHierarchyAdapter(FullyQualifiedName.class, new FullyQualifiedNameSerializer())
-        .registerTypeHierarchyAdapter(TestResult.class, new TestResultSerializerForDebug())
-        .registerTypeHierarchyAdapter(Coverage.class, new CoverageSerializer())
-        .create()
-        .toJson(value.values());
   }
 
   /**
@@ -300,5 +292,14 @@ public class TestResults {
         .stream()
         .map(JavaBinaryObject::getFqn)
         .collect(Collectors.toSet());
+  }
+
+  /**
+   * テスト実行時間
+   *
+   * @return
+   */
+  public double getTestTime() {
+    return this.testExecTime;
   }
 }

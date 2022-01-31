@@ -1,29 +1,45 @@
 package jp.kusumotolab.kgenprog.output;
 
 import static jp.kusumotolab.kgenprog.project.factory.JUnitLibraryResolver.JUnitVersion.JUNIT4;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import org.junit.Before;
 import org.junit.Test;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import jp.kusumotolab.kgenprog.Configuration;
 import jp.kusumotolab.kgenprog.ga.variant.Variant;
+import jp.kusumotolab.kgenprog.project.FullyQualifiedName;
 import jp.kusumotolab.kgenprog.project.GeneratedSourceCode;
+import jp.kusumotolab.kgenprog.project.TestFullyQualifiedName;
 import jp.kusumotolab.kgenprog.project.factory.TargetProject;
 import jp.kusumotolab.kgenprog.project.factory.TargetProjectFactory;
 import jp.kusumotolab.kgenprog.project.test.LocalTestExecutor;
 import jp.kusumotolab.kgenprog.project.test.TestExecutor;
+import jp.kusumotolab.kgenprog.project.test.TestResult;
 import jp.kusumotolab.kgenprog.project.test.TestResults;
 import jp.kusumotolab.kgenprog.testutil.JsonKeyAlias;
 import jp.kusumotolab.kgenprog.testutil.TestUtil;
 
 public class TestResultsSerializerTest {
 
-  private final Gson gson = TestUtil.createGson();
+  private Gson gson;
+
+  @Before
+  public void setup() {
+    gson = new GsonBuilder().registerTypeAdapter(TestResult.class, new TestResultSerializer())
+        .registerTypeHierarchyAdapter(TestResults.class, new TestResultsSerializer())
+        .create();
+  }
 
   private TestResults execTest(final Path rootPath, final List<Path> sourcePaths,
       final List<Path> testPaths) {
@@ -51,26 +67,26 @@ public class TestResultsSerializerTest {
         Collections.emptyList());
 
     // シリアライズ
-    final String serializedTestResults = gson.toJson(result);
+    final JsonObject serializedTestResults = gson.toJsonTree(result)
+        .getAsJsonObject();
+    final double successRate = serializedTestResults.get("successRate")
+        .getAsDouble();
+    final int executedTestsCount = serializedTestResults.get("executedTestsCount")
+        .getAsInt();
+    final JsonArray serializedTestResultList = serializedTestResults.get("testResults")
+        .getAsJsonArray();
 
     // 他のキーを持っていないかチェック
-    assertThatJson(serializedTestResults)
-        .isObject()
-        .containsOnlyKeys(JsonKeyAlias.TestResults.EXECUTED_TESTS_COUNT,
-            JsonKeyAlias.TestResults.TEST_RESULTS,
-            JsonKeyAlias.TestResults.SUCCESS_RATE);
+    final Set<String> actualKeySet = serializedTestResults.keySet();
+    assertThat(actualKeySet).containsExactly(JsonKeyAlias.TestResults.SUCCESS_RATE,
+        JsonKeyAlias.TestResults.EXECUTED_TESTS_COUNT,
+        JsonKeyAlias.TestResults.TEST_RESULTS
+    );
 
     // 値が正しいかチェック
-    assertThatJson(serializedTestResults)
-        .node(JsonKeyAlias.TestResults.EXECUTED_TESTS_COUNT)
-        .isEqualTo(0);
-    assertThatJson(serializedTestResults)
-        .node(JsonKeyAlias.TestResults.TEST_RESULTS)
-        .isArray()
-        .isEmpty();
-    assertThatJson(serializedTestResults)
-        .node(JsonKeyAlias.TestResults.SUCCESS_RATE)
-        .isEqualTo(-1.0d);
+    assertThat(successRate).isEqualTo(-1.0d);
+    assertThat(executedTestsCount).isEqualTo(0);
+    assertThat(serializedTestResultList).isEmpty();
   }
 
   /**
@@ -87,37 +103,42 @@ public class TestResultsSerializerTest {
         Collections.singletonList(testPath));
 
     // シリアライズ
-    final String serializedTestResults = gson.toJson(result);
+    final JsonObject serializedTestResults = gson.toJsonTree(result)
+        .getAsJsonObject();
+    final double successRate = serializedTestResults.get("successRate")
+        .getAsDouble();
+    final int executedTestsCount = serializedTestResults.get("executedTestsCount")
+        .getAsInt();
+    final JsonArray serializedTestResultList = serializedTestResults.get("testResults")
+        .getAsJsonArray();
 
     // 他のキーを持っていないかチェック
-    assertThatJson(serializedTestResults)
-        .isObject()
-        .containsOnlyKeys(JsonKeyAlias.TestResults.EXECUTED_TESTS_COUNT,
-            JsonKeyAlias.TestResults.TEST_RESULTS,
-            JsonKeyAlias.TestResults.SUCCESS_RATE);
+    final Set<String> actualKeySet = serializedTestResults.keySet();
+    assertThat(actualKeySet).containsExactly(JsonKeyAlias.TestResults.SUCCESS_RATE,
+        JsonKeyAlias.TestResults.EXECUTED_TESTS_COUNT,
+        JsonKeyAlias.TestResults.TEST_RESULTS
+    );
 
     // 値が正しいかチェック
-    assertThatJson(serializedTestResults)
-        .node(JsonKeyAlias.TestResults.EXECUTED_TESTS_COUNT)
-        .isEqualTo(4);
-    assertThatJson(serializedTestResults)
-        .node(JsonKeyAlias.TestResults.TEST_RESULTS)
-        .isArray()
-        .hasSize(4);
-    assertThatJson(serializedTestResults)
-        .node(JsonKeyAlias.TestResults.SUCCESS_RATE)
-        .isEqualTo(0.75d);
+    assertThat(successRate).isEqualTo(0.75d);
+    assertThat(executedTestsCount).isEqualTo(4);
+    assertThat(serializedTestResultList).hasSize(4);
 
-    assertThatJson(serializedTestResults)
-        .inPath("$.testResults[*].fqn")
-        .isArray()
-        .containsExactly("example.CloseToZeroTest.test01",
-            "example.CloseToZeroTest.test02",
-            "example.CloseToZeroTest.test03",
-            "example.CloseToZeroTest.test04");
-    assertThatJson(serializedTestResults)
-        .inPath("$.testResults[*].isSuccess")
-        .isArray()
-        .containsExactly(true, true, false, true);
+    // 事前に実行したテストのFQNを取得しておく
+    final Set<FullyQualifiedName> testFQNs = result.getExecutedTestFQNs();
+
+    // 各テストの実行結果をチェック
+    for (final JsonElement element : serializedTestResultList) {
+      final JsonObject serializedTestResult = element.getAsJsonObject();
+      final String fqnValue = serializedTestResult.get(JsonKeyAlias.TestResult.FQN)
+          .getAsString();
+      final boolean isSuccess = serializedTestResult.get(JsonKeyAlias.TestResult.IS_SUCCESS)
+          .getAsBoolean();
+      final FullyQualifiedName fqn = new TestFullyQualifiedName(fqnValue);
+
+      assertThat(testFQNs).contains(fqn);
+      final TestResult testResult = result.getTestResult(fqn);
+      assertThat(isSuccess).isEqualTo(!testResult.failed);
+    }
   }
 }

@@ -55,4 +55,7 @@ public interface Coverage {
    * @return
    */
   int getStatusesSize();
+
+  String toString(final int indentDepth);
+
 }

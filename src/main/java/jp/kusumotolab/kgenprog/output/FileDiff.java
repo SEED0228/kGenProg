@@ -44,7 +44,8 @@ public class FileDiff {
 
   @Override
   public String toString() {
-    return String.join("\n", diff);
+    return diff.stream()
+        .collect(Collectors.joining(System.lineSeparator()));
   }
 
   /**
