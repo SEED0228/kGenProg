@@ -1,5 +1,8 @@
 package jp.kusumotolab.kgenprog;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Predicate;
@@ -124,6 +127,7 @@ public class KGenProgMain {
 
 
   private ExitStatus execGALoop(final VariantStore variantStore, final StopWatch stopwatch) {
+    String str = "genNum,stDev\n";
     while (true) {
       // 新しい世代に入ったことをログ出力
       logwriter.logGeneration(variantStore.getGenerationNumber());
@@ -144,6 +148,15 @@ public class KGenProgMain {
 
       // しきい値以上の completedVariants が生成された場合は，GA を抜ける
       if (areEnoughCompletedVariants(variantStore.getFoundSolutions())) {
+        try {
+          File file = new File("stDev.csv");
+          FileWriter fileWriter = new FileWriter(file);
+          fileWriter.write(str);
+          fileWriter.close();
+        }
+        catch (IOException e) {
+          System.out.println(e);
+        }
         return ExitStatus.SUCCESS;
       }
 
@@ -156,6 +169,11 @@ public class KGenProgMain {
       if (reachedMaxGeneration(variantStore.getGenerationNumber())) {
         return ExitStatus.FAILURE_MAXIMUM_GENERATION;
       }
+
+      stopwatch.suspend();
+      str += variantStore.getGenerationNumber().toString() + ",";
+      str += variantStore.getStandardDeviation() + "\n";
+      stopwatch.resume();
 
       if (config.isUpdatedFitnessValue() && variantStore.getGenerationNumber().get() % config.getFitnessValueUpdateFrequency() == 0) {
         stopwatch.suspend();

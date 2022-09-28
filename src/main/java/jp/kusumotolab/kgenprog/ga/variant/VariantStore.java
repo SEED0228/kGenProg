@@ -276,6 +276,21 @@ public class VariantStore {
         .count();
   }
 
+  public double getStandardDeviation() {
+    final List<Variant> variants = Stream.concat(this.getGeneratedVariants().stream(), this.getCurrentVariants().stream())
+            .filter(v -> v.isBuildSucceeded() && !v.getIsUpDatedFitnessValue())
+            .collect(Collectors.toList());
+    final double avg = variants.stream()
+            .mapToDouble(v -> v.getFitness().getNormalizedValue())
+            .average().orElse(0.);
+    final double ret = Math.sqrt(
+            variants.stream()
+                    .mapToDouble(v -> Math.pow(v.getFitness().getNormalizedValue() - avg, 2.))
+                    .average().orElse(0.)
+    );
+    return ret;
+  }
+
   /**
    * 手動で適応値を設定する
    */
