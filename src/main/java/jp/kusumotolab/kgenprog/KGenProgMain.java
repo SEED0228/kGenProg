@@ -1,11 +1,7 @@
 package jp.kusumotolab.kgenprog;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalDouble;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -159,6 +155,12 @@ public class KGenProgMain {
       // 最大世代数に到達した場合には GA を抜ける
       if (reachedMaxGeneration(variantStore.getGenerationNumber())) {
         return ExitStatus.FAILURE_MAXIMUM_GENERATION;
+      }
+
+      if (config.isUpdatedFitnessValue() && variantStore.getGenerationNumber().get() % config.getFitnessValueUpdateFrequency() == 0) {
+        stopwatch.suspend();
+        variantStore.setNewFitnessValue();
+        stopwatch.resume();
       }
 
       // 次世代に向けての準備

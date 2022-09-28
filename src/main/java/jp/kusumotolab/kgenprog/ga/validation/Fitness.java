@@ -23,4 +23,9 @@ public interface Fitness extends Comparable<Fitness> {
    * @return 評価値の文字列表現を返す．
    */
   String toString();
+
+  /**
+   * @param value 評価値
+   */
+  void setValue(double value);
 }

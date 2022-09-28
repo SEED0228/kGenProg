@@ -1,14 +1,12 @@
 package jp.kusumotolab.kgenprog.ga.variant;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import io.reactivex.Single;
 import jp.kusumotolab.kgenprog.Configuration;
 import jp.kusumotolab.kgenprog.OrdinalNumber;
@@ -16,6 +14,8 @@ import jp.kusumotolab.kgenprog.Strategies;
 import jp.kusumotolab.kgenprog.fl.Suspiciousness;
 import jp.kusumotolab.kgenprog.ga.validation.Fitness;
 import jp.kusumotolab.kgenprog.ga.validation.SourceCodeValidation.Input;
+import jp.kusumotolab.kgenprog.output.Patch;
+import jp.kusumotolab.kgenprog.output.PatchGenerator;
 import jp.kusumotolab.kgenprog.project.GeneratedSourceCode;
 import jp.kusumotolab.kgenprog.project.test.EmptyTestResults;
 import jp.kusumotolab.kgenprog.project.test.TestResults;
@@ -275,4 +275,44 @@ public class VariantStore {
         .filter(Variant::isBuildSucceeded)
         .count();
   }
+
+  /**
+   * 手動で適応値を設定する
+   */
+  public void setNewFitnessValue() {
+    final PatchGenerator patchGenerator = new PatchGenerator();
+    for(Variant v: Stream.concat(this.getGeneratedVariants().stream(), this.getCurrentVariants().stream())
+            .filter(v -> v.isBuildSucceeded() && !v.getIsUpDatedFitnessValue())
+            .collect(Collectors.toList())
+    ) {
+      long id = v.getId();
+      if(id == 0) {
+        continue;
+      }
+      try {
+        Scanner scanner = new Scanner(System.in);
+        Patch patch = patchGenerator.exec(v);
+        System.out.println(patch.getFileDiffs());
+        System.out.println("variant id: " + id);
+        System.out.println("current fitness value: " + v.getFitness());
+//        if(v.getFitness().getNormalizedValue() != 1.0) {
+//          System.out.print("new fitness value    : 0");
+//          v.updateFitnessValue(0.0);
+//        }
+//        else {
+//          System.out.print("new fitness value    : 1");
+//          v.updateFitnessValue(1.0);
+//        }
+        System.out.print("new fitness value    : ");
+        double input = scanner.nextDouble();
+        if(input >= 0.0 && input <= 1.0) {
+          v.updateFitnessValue(input);
+        }
+      } catch (InputMismatchException e) {
+        System.out.println("Invalid input");
+      }
+
+    }
+  }
+
 }

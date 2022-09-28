@@ -66,6 +66,8 @@ public class Configuration {
       SecondVariantSelectionStrategy.Strategy.Random;
   public static final boolean DEFAULT_IS_PATCH_OUTPUT = false;
   public static final boolean DEFAULT_IS_HISTORY_RECORD = false;
+  private static final boolean DEFAULT_IS_UPDATED_FITNESS_VALUE = false;
+  public static final long DEFAULT_FITNESS_VALUE_UPDATE_FREQUENCY = 5;
 
   private final TargetProject targetProject;
   private final List<String> executionTests;
@@ -88,6 +90,8 @@ public class Configuration {
   private final boolean isPatchOutput;
   private final boolean isHistoryRecord;
   private final Builder builder;
+  private final boolean isUpdatedFitnessValue;
+  public final long fitnessValueUpdateFrequency;
 
   private Configuration(final Builder builder) {
     this.targetProject = builder.targetProject;
@@ -111,6 +115,8 @@ public class Configuration {
     this.isPatchOutput = builder.isPatchOutput;
     this.isHistoryRecord = builder.isHistoryRecord;
     this.builder = builder;
+    this.isUpdatedFitnessValue = builder.isUpdatedFitnessValue;
+    this.fitnessValueUpdateFrequency = builder.fitnessValueUpdateFrequency;
   }
 
   public TargetProject getTargetProject() {
@@ -201,6 +207,13 @@ public class Configuration {
   public boolean isHistoryRecord() {
     return isHistoryRecord;
   }
+  public boolean isUpdatedFitnessValue() {
+    return isUpdatedFitnessValue;
+  }
+  public long getFitnessValueUpdateFrequency() {
+    return fitnessValueUpdateFrequency;
+  }
+
 
   @Override
   public String toString() {
@@ -322,6 +335,14 @@ public class Configuration {
     @com.electronwill.nightconfig.core.conversion.Path("history-record")
     @PreserveNotNull
     private boolean isHistoryRecord = DEFAULT_IS_HISTORY_RECORD;
+
+    @com.electronwill.nightconfig.core.conversion.Path("is-updated-fitness-value")
+    @PreserveNotNull
+    private boolean isUpdatedFitnessValue = DEFAULT_IS_UPDATED_FITNESS_VALUE;
+
+    @com.electronwill.nightconfig.core.conversion.Path("update-frequency")
+    @PreserveNotNull
+    private long fitnessValueUpdateFrequency = DEFAULT_FITNESS_VALUE_UPDATE_FREQUENCY;
 
     private final transient Set<String> optionsSetByCmdLineArgs = new HashSet<>();
     private final transient Set<String> optionsSetByConfigFile = new HashSet<>();
@@ -879,6 +900,19 @@ public class Configuration {
     private void setHistoryRecordFromCmdLineParser(final boolean isHistoryRecord) {
       this.isHistoryRecord = isHistoryRecord;
       this.optionsSetByCmdLineArgs.add("historyRecord");
+    }
+
+    @Option(name = "--is-updated-fitness-value", usage = "Record and write generation history to output dir.")
+    private void setIsUpdatedFitnessValueFromCmdLineParser(final boolean isUpdatedFitnessValue) {
+      this.isUpdatedFitnessValue = isUpdatedFitnessValue;
+      this.optionsSetByCmdLineArgs.add("isUpdatedFitnessValue");
+    }
+
+    @Option(name = "--update-frequency", metaVar = "<num>",
+            usage = "Specify how often fitness values are updated manually.")
+    private void setFitnessValueUpdateFrequencyFromCmdLineParser(final long fitnessValueUpdateFrequency) {
+      this.fitnessValueUpdateFrequency = fitnessValueUpdateFrequency;
+      this.optionsSetByCmdLineArgs.add("fitnessValueUpdateFrequency");
     }
 
     @Option(name = "--version", usage = "Print version.")

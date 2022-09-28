@@ -6,7 +6,7 @@ package jp.kusumotolab.kgenprog.ga.validation;
 public class SimpleFitness implements Fitness {
 
   public static final double MAXIMUM_VALUE = 1.0d;
-  private final double value;
+  private double value;
 
   /**
    * @param value 保持する評価値
@@ -61,5 +61,10 @@ public class SimpleFitness implements Fitness {
       return 1;
     }
     return Double.compare(value, anotherSimpleFitness.value);
+  }
+
+  @Override
+  public void setValue(double value) {
+    this.value = value;
   }
 }

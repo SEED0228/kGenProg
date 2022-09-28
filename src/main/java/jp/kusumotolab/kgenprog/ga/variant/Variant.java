@@ -22,6 +22,7 @@ public class Variant {
   private int selectionCount = 0;
   private final List<Suspiciousness> suspiciousnesses;
   private final HistoricalElement historicalElement;
+  private boolean isUpDatedFitnessValue = false;
 
   /**
    * コンストラクタ
@@ -154,4 +155,19 @@ public class Variant {
   void incrementSelectionCount() {
     selectionCount++;
   }
+
+  /**
+   * 評価値を更新する
+   *
+   * @param value 更新する評価値
+   */
+  public void updateFitnessValue(double value) {
+    this.isUpDatedFitnessValue = true;
+    this.getFitness().setValue(value);
+  }
+
+  /**
+   * @return 評価値を更新済みかどうか
+   */
+  public boolean getIsUpDatedFitnessValue() { return this.isUpDatedFitnessValue; }
 }
