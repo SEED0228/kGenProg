@@ -146,6 +146,11 @@ public class KGenProgMain {
           Stream.concat(variantsByMutation.stream(), variantsByCrossover.stream())
               .collect(Collectors.toList()));
 
+      stopwatch.suspend();
+      str += variantStore.getGenerationNumber().toString() + ",";
+      str += variantStore.getStandardDeviation() + "\n";
+      stopwatch.resume();
+
       // しきい値以上の completedVariants が生成された場合は，GA を抜ける
       if (areEnoughCompletedVariants(variantStore.getFoundSolutions())) {
         try {
@@ -162,18 +167,36 @@ public class KGenProgMain {
 
       // 制限時間に達した場合には GA を抜ける
       if (stopwatch.isTimeout()) {
+        try {
+          File file = new File("stDev.csv");
+          FileWriter fileWriter = new FileWriter(file);
+          fileWriter.write(str);
+          fileWriter.close();
+        }
+        catch (IOException e) {
+          System.out.println(e);
+        }
         return ExitStatus.FAILURE_TIME_LIMIT;
       }
 
       // 最大世代数に到達した場合には GA を抜ける
       if (reachedMaxGeneration(variantStore.getGenerationNumber())) {
+        try {
+          File file = new File("stDev.csv");
+          FileWriter fileWriter = new FileWriter(file);
+          fileWriter.write(str);
+          fileWriter.close();
+        }
+        catch (IOException e) {
+          System.out.println(e);
+        }
         return ExitStatus.FAILURE_MAXIMUM_GENERATION;
       }
 
-      stopwatch.suspend();
-      str += variantStore.getGenerationNumber().toString() + ",";
-      str += variantStore.getStandardDeviation() + "\n";
-      stopwatch.resume();
+//      stopwatch.suspend();
+//      str += variantStore.getGenerationNumber().toString() + ",";
+//      str += variantStore.getStandardDeviation() + "\n";
+//      stopwatch.resume();
 
       if (config.isUpdatedFitnessValue() && variantStore.getGenerationNumber().get() % config.getFitnessValueUpdateFrequency() == 0) {
         stopwatch.suspend();
