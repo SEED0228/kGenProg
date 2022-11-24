@@ -1,0 +1,4 @@
+root-dir = "./"
+src = ["src/java"]
+test = ["src/test"]
+exec-test = ["org.apache.commons.math.distribution.NormalDistributionTest"]

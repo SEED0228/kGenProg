@@ -1,0 +1,4 @@
+root-dir = "./"
+src = ["src/main/java"]
+test = ["src/test/java"]
+exec-test = ["org.apache.commons.math3.complex.ComplexTest"]
