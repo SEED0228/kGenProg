@@ -291,6 +291,74 @@ public class VariantStore {
     return ret;
   }
 
+  public int getMinDistance() {
+    final List<Variant> variants = Stream.concat(this.getGeneratedVariants().stream(), this.getCurrentVariants().stream())
+            .filter(v -> v.isBuildSucceeded() && !v.getIsUpDatedFitnessValue())
+            .collect(Collectors.toList());
+    final int ret = variants.stream()
+            .mapToInt(v -> v.getLevenshteinDistance())
+            .min().orElse(999);
+    return ret;
+  }
+
+  public List<Variant> getAllParents(Variant variant) {
+    List<Variant> variants = new ArrayList<Variant>();
+    for(Variant v: variant.getHistoricalElement().getParents()) {
+      for(Variant v2: getAllParents(v)) {
+        variants.add(v2);
+      }
+    }
+    variants.add(variant);
+    variants = new ArrayList<>(new HashSet<>(variants));
+    return variants;
+  }
+
+  public String getStandardDeviation2() {
+    String ret = "id,stDev,dist\n";
+    for(Variant variant: allVariants) {
+      if(variant.isBuildSucceeded()) {
+        List<Variant> variants = getAllParents(variant);
+        final double avg = variants.stream()
+                .mapToDouble(v -> v.getFitness().getNormalizedValue())
+                .average().orElse(0.);
+        final double stDev = Math.sqrt(
+                variants.stream()
+                        .mapToDouble(v -> Math.pow(v.getFitness().getNormalizedValue() - avg, 2.))
+                        .average().orElse(0.)
+        );
+        ret += variant.getId() + ",";
+        ret += stDev + ",";
+        ret += variant.getLevenshteinDistance() + "\n";
+      }
+    }
+
+    return ret;
+  }
+
+  public String getStandardDeviation3() {
+    String ret = "id,fit,dist,parentFit,parentDist,childFit,childDist\n";
+    for(Variant variant: allVariants) {
+      if(variant.isBuildSucceeded()) {
+        List<Variant> variants = variant.getHistoricalElement().getParents();
+        if(variants.size() == 1) { // とりあえず親を1つ持つやつだけで検証
+          final double parentFit = variants.stream()
+                  .mapToDouble(v -> v.getFitness().getNormalizedValue())
+                  .max().orElse(0.);
+          final double parentDist = variants.stream()
+                  .mapToDouble(v -> v.getLevenshteinDistance() )
+                  .min().orElse(0.);
+          final double childFit = variant.getFitness().getNormalizedValue();
+          final double childDist = variant.getLevenshteinDistance();
+          final double fit = childFit - parentFit;
+          final double dist = childDist - parentDist;
+          ret += variant.getId() + "," + fit + "," + dist + "," + parentFit + "," + parentDist + "," + childFit + "," + childDist + "," + "\n";
+        }
+      }
+    }
+
+    return ret;
+  }
+
   /**
    * 手動で適応値を設定する
    */

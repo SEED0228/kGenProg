@@ -127,7 +127,7 @@ public class KGenProgMain {
 
 
   private ExitStatus execGALoop(final VariantStore variantStore, final StopWatch stopwatch) {
-    String str = "genNum,stDev\n";
+    String str = "genNum, stDev, minDest\n";
     while (true) {
       // 新しい世代に入ったことをログ出力
       logwriter.logGeneration(variantStore.getGenerationNumber());
@@ -146,17 +146,17 @@ public class KGenProgMain {
           Stream.concat(variantsByMutation.stream(), variantsByCrossover.stream())
               .collect(Collectors.toList()));
 
-      stopwatch.suspend();
-      str += variantStore.getGenerationNumber().toString() + ",";
-      str += variantStore.getStandardDeviation() + "\n";
-      stopwatch.resume();
-
       // しきい値以上の completedVariants が生成された場合は，GA を抜ける
       if (areEnoughCompletedVariants(variantStore.getFoundSolutions())) {
         try {
           File file = new File("stDev.csv");
           FileWriter fileWriter = new FileWriter(file);
-          fileWriter.write(str);
+          // 世代
+//          fileWriter.write(str);
+          // 遺伝的アルゴリズムの標準偏差及び距離の出力
+//          fileWriter.write(variantStore.getStandardDeviation2());
+          // 親子の適応値の差と編集距離の差を算出
+          fileWriter.write(variantStore.getStandardDeviation3());
           fileWriter.close();
         }
         catch (IOException e) {
@@ -170,7 +170,12 @@ public class KGenProgMain {
         try {
           File file = new File("stDev.csv");
           FileWriter fileWriter = new FileWriter(file);
-          fileWriter.write(str);
+          // 世代
+//          fileWriter.write(str);
+          // 遺伝的アルゴリズムの標準偏差及び距離の出力
+//          fileWriter.write(variantStore.getStandardDeviation2());
+          // 親子の適応値の差と編集距離の差を算出
+          fileWriter.write(variantStore.getStandardDeviation3());
           fileWriter.close();
         }
         catch (IOException e) {
@@ -184,7 +189,12 @@ public class KGenProgMain {
         try {
           File file = new File("stDev.csv");
           FileWriter fileWriter = new FileWriter(file);
-          fileWriter.write(str);
+          // 世代
+//          fileWriter.write(str);
+          // 遺伝的アルゴリズムの標準偏差及び距離の出力
+//          fileWriter.write(variantStore.getStandardDeviation2());
+          // 親子の適応値の差と編集距離の差を算出
+          fileWriter.write(variantStore.getStandardDeviation3());
           fileWriter.close();
         }
         catch (IOException e) {
@@ -193,10 +203,11 @@ public class KGenProgMain {
         return ExitStatus.FAILURE_MAXIMUM_GENERATION;
       }
 
-//      stopwatch.suspend();
-//      str += variantStore.getGenerationNumber().toString() + ",";
-//      str += variantStore.getStandardDeviation() + "\n";
-//      stopwatch.resume();
+      stopwatch.suspend();
+      str += variantStore.getGenerationNumber().toString() + ",";
+      str += variantStore.getStandardDeviation() + ",";
+      str += variantStore.getMinDistance() + "\n";
+      stopwatch.resume();
 
       if (config.isUpdatedFitnessValue() && variantStore.getGenerationNumber().get() % config.getFitnessValueUpdateFrequency() == 0) {
         stopwatch.suspend();

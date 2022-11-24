@@ -1,10 +1,18 @@
 package jp.kusumotolab.kgenprog.ga.variant;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import jp.kusumotolab.kgenprog.OrdinalNumber;
 import jp.kusumotolab.kgenprog.fl.Suspiciousness;
 import jp.kusumotolab.kgenprog.ga.validation.Fitness;
+import jp.kusumotolab.kgenprog.project.GeneratedAST;
 import jp.kusumotolab.kgenprog.project.GeneratedSourceCode;
+import jp.kusumotolab.kgenprog.project.ProductSourcePath;
 import jp.kusumotolab.kgenprog.project.test.EmptyTestResults;
 import jp.kusumotolab.kgenprog.project.test.TestResults;
 
@@ -170,4 +178,70 @@ public class Variant {
    * @return 評価値を更新済みかどうか
    */
   public boolean getIsUpDatedFitnessValue() { return this.isUpDatedFitnessValue; }
+
+  public List<Variant> getAllParents() {
+    List<Variant> variants = new ArrayList<Variant>();
+    for(Variant v: getHistoricalElement().getParents()) {
+      for(Variant v2: v.getAllParents()) {
+        variants.add(v2);
+      }
+    }
+    variants.add(this);
+    variants = new ArrayList<>(new HashSet<>(variants));
+    return variants;
+  }
+
+  private static int levenshteinDistance( String s1, String s2 ) {
+    return dist( s1.toCharArray(), s2.toCharArray() );
+  }
+
+  private static int dist( char[] s1, char[] s2 ) {
+
+    // memoize only previous line of distance matrix
+    int[] prev = new int[ s2.length + 1 ];
+
+    for( int j = 0; j < s2.length + 1; j++ ) {
+      prev[ j ] = j;
+    }
+
+    for( int i = 1; i < s1.length + 1; i++ ) {
+
+      // calculate current line of distance matrix
+      int[] curr = new int[ s2.length + 1 ];
+      curr[0] = i;
+
+      for( int j = 1; j < s2.length + 1; j++ ) {
+        int d1 = prev[ j ] + 1;
+        int d2 = curr[ j - 1 ] + 1;
+        int d3 = prev[ j - 1 ];
+        if ( s1[ i - 1 ] != s2[ j - 1 ] ) {
+          d3 += 1;
+        }
+        curr[ j ] = Math.min( Math.min( d1, d2 ), d3 );
+      }
+
+      // define current line of distance matrix as previous
+      prev = curr;
+    }
+    return prev[ s2.length ];
+  }
+
+  public int getLevenshteinDistance() {
+    int distValue = 0;
+    if(isBuildSucceeded()) {
+      for(GeneratedAST<ProductSourcePath> generatedAST: getGeneratedSourceCode().getProductAsts()) {
+        try {
+          String code = Files.readString(Path.of("ans/" + Paths.get(generatedAST.getSourcePath().toString())));
+          distValue += levenshteinDistance(generatedAST.getSourceCode(), code);
+        } catch(IOException ex) {
+          ex.printStackTrace();
+        }
+      }
+    }
+    else {
+      distValue = -1;
+    }
+    System.out.println(distValue);
+    return distValue;
+  }
 }

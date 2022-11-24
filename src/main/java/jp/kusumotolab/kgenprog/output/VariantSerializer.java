@@ -1,12 +1,19 @@
 package jp.kusumotolab.kgenprog.output;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import jp.kusumotolab.kgenprog.ga.variant.Variant;
 import jp.kusumotolab.kgenprog.fl.Suspiciousness;
+import jp.kusumotolab.kgenprog.project.GeneratedAST;
+import jp.kusumotolab.kgenprog.project.ProductSourcePath;
 
 /**
  * Variantをシリアライズするクラス.<br>
@@ -83,6 +90,42 @@ public class VariantSerializer implements JsonSerializer<Variant> {
 
   private final PatchGenerator patchGenerator = new PatchGenerator();
 
+  private static int levenshteinDistance( String s1, String s2 ) {
+    return dist( s1.toCharArray(), s2.toCharArray() );
+  }
+
+  private static int dist( char[] s1, char[] s2 ) {
+
+    // memoize only previous line of distance matrix
+    int[] prev = new int[ s2.length + 1 ];
+
+    for( int j = 0; j < s2.length + 1; j++ ) {
+      prev[ j ] = j;
+    }
+
+    for( int i = 1; i < s1.length + 1; i++ ) {
+
+      // calculate current line of distance matrix
+      int[] curr = new int[ s2.length + 1 ];
+      curr[0] = i;
+
+      for( int j = 1; j < s2.length + 1; j++ ) {
+        int d1 = prev[ j ] + 1;
+        int d2 = curr[ j - 1 ] + 1;
+        int d3 = prev[ j - 1 ];
+        if ( s1[ i - 1 ] != s2[ j - 1 ] ) {
+          d3 += 1;
+        }
+        curr[ j ] = Math.min( Math.min( d1, d2 ), d3 );
+      }
+
+      // define current line of distance matrix as previous
+      prev = curr;
+    }
+    return prev[ s2.length ];
+  }
+
+
   /**
    * シリアライズを行う.<br>
    *
@@ -102,13 +145,30 @@ public class VariantSerializer implements JsonSerializer<Variant> {
 
     final JsonObject serializedVariant = new JsonObject();
 
+    int distValue = 0;
+    if(variant.isBuildSucceeded()) {
+      for(GeneratedAST<ProductSourcePath> generatedAST:variant.getGeneratedSourceCode().getProductAsts()) {
+        try {
+          String code = Files.readString(Path.of("ans/" + Paths.get(generatedAST.getSourcePath().toString())));
+          distValue += levenshteinDistance(generatedAST.getSourceCode(), code);
+        } catch(IOException ex) {
+          ex.printStackTrace();
+        }
+      }
+    }
+    else {
+      distValue = -1;
+    }
+
     serializedVariant.addProperty("id", variant.getId());
     serializedVariant.addProperty("generationNumber", generationNumber);
     serializedVariant.addProperty("selectionCount", variant.getSelectionCount());
     serializedVariant.addProperty("fitness", fitness);
+    serializedVariant.addProperty("levenshteinDistance", distValue);
     serializedVariant.addProperty("isBuildSuccess", variant.isBuildSucceeded());
     serializedVariant.addProperty("isSyntaxValid", variant.isSyntaxValid());
     serializedVariant.addProperty("sourceCode", variant.getGeneratedSourceCode().getProductAsts().size() != 0 ? variant.getGeneratedSourceCode().getProductAsts().get(0).getSourceCode() : "NaN");
+//    serializedVariant.add("codes", context.serialize(variant.getGeneratedSourceCode().getProductAsts()));
     serializedVariant.add("bases", context.serialize(variant.getGene()
         .getBases()));
     serializedVariant.add("patch", context.serialize(patch));

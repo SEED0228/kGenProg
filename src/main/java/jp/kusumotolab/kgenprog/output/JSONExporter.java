@@ -4,6 +4,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import jp.kusumotolab.kgenprog.project.GeneratedAST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
@@ -55,6 +57,7 @@ class JSONExporter implements Exporter {
     final GsonBuilder gsonBuilder = new GsonBuilder();
     return gsonBuilder.registerTypeAdapter(VariantStore.class, new VariantStoreSerializer())
         .registerTypeHierarchyAdapter(Variant.class, new VariantSerializer())
+        .registerTypeHierarchyAdapter(GeneratedAST.class, new GeneratedASTSerializer())
         .registerTypeHierarchyAdapter(Suspiciousness.class, new SuspiciousnessSerializer())
         .registerTypeHierarchyAdapter(TestResults.class, new TestResultsSerializer())
         .registerTypeHierarchyAdapter(TestResult.class, new TestResultSerializer())

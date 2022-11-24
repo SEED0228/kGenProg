@@ -15,6 +15,7 @@ public class SuspiciousnessSerializer implements JsonSerializer<Suspiciousness> 
                                  final JsonSerializationContext context) {
         final JsonObject serializedSuspiciousness = new JsonObject();
         serializedSuspiciousness.addProperty("value", suspiciousness.getValue());
+        serializedSuspiciousness.addProperty("path", suspiciousness.getLocation().getSourcePath().toString());
         serializedSuspiciousness.add("lineNumberRange", context.serialize(suspiciousness.getLocation().inferLineNumbers(),
                 LineNumberRange.class));
         return serializedSuspiciousness;
