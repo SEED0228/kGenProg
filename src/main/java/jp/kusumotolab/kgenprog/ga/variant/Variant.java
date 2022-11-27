@@ -231,7 +231,11 @@ public class Variant {
     if(isBuildSucceeded()) {
       for(GeneratedAST<ProductSourcePath> generatedAST: getGeneratedSourceCode().getProductAsts()) {
         try {
-          String code = Files.readString(Path.of("ans/" + Paths.get(generatedAST.getSourcePath().toString())));
+          // 通常時
+//          String ans = "ans/";
+          // real bug
+          String ans = "ans/example/real-bugs/Math73/";
+          String code = Files.readString(Path.of(ans + Paths.get(generatedAST.getSourcePath().toString())));
           distValue += levenshteinDistance(generatedAST.getSourceCode(), code);
         } catch(IOException ex) {
           ex.printStackTrace();
