@@ -203,11 +203,12 @@ public class KGenProgMain {
         return ExitStatus.FAILURE_MAXIMUM_GENERATION;
       }
 
-      stopwatch.suspend();
-      str += variantStore.getGenerationNumber().toString() + ",";
-      str += variantStore.getStandardDeviation() + ",";
-      str += variantStore.getMinDistance() + "\n";
-      stopwatch.resume();
+//      // 世代
+//      stopwatch.suspend();
+//      str += variantStore.getGenerationNumber().toString() + ",";
+//      str += variantStore.getStandardDeviation() + ",";
+//      str += variantStore.getMinDistance() + "\n";
+//      stopwatch.resume();
 
       if (config.isUpdatedFitnessValue() && variantStore.getGenerationNumber().get() % config.getFitnessValueUpdateFrequency() == 0) {
         stopwatch.suspend();
