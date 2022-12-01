@@ -170,9 +170,9 @@ public class KGenProgMain {
         try {
           File file = new File("stDev.csv");
           FileWriter fileWriter = new FileWriter(file);
-          // 世代
+//          // 世代
 //          fileWriter.write(str);
-          // 遺伝的アルゴリズムの標準偏差及び距離の出力
+//          // 遺伝的アルゴリズムの標準偏差及び距離の出力
 //          fileWriter.write(variantStore.getStandardDeviation2());
           // 親子の適応値の差と編集距離の差を算出
           fileWriter.write(variantStore.getStandardDeviation3());

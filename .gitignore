@@ -410,4 +410,5 @@ example/real-bugs/
 !.gitkeep
 json*
 stDev.csv
+example/defect4j/*
 
