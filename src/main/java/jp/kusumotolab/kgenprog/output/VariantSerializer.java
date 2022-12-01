@@ -145,26 +145,28 @@ public class VariantSerializer implements JsonSerializer<Variant> {
 
     final JsonObject serializedVariant = new JsonObject();
 
-    int distValue = 0;
-    if(variant.isBuildSucceeded()) {
-      for(GeneratedAST<ProductSourcePath> generatedAST:variant.getGeneratedSourceCode().getProductAsts()) {
-        try {
-          String code = Files.readString(Path.of("ans/" + Paths.get(generatedAST.getSourcePath().toString())));
-          distValue += levenshteinDistance(generatedAST.getSourceCode(), code);
-        } catch(IOException ex) {
-          ex.printStackTrace();
-        }
-      }
-    }
-    else {
-      distValue = -1;
-    }
+//    // 距離をJSON出力したい場合に追加
+//    int distValue = 0;
+//    if(variant.isBuildSucceeded()) {
+//      for(GeneratedAST<ProductSourcePath> generatedAST:variant.getGeneratedSourceCode().getProductAsts()) {
+//        try {
+//          String code = Files.readString(Path.of("ans/" + Paths.get(generatedAST.getSourcePath().toString())));
+//          distValue += levenshteinDistance(generatedAST.getSourceCode(), code);
+//        } catch(IOException ex) {
+//          ex.printStackTrace();
+//        }
+//      }
+//    }
+//    else {
+//      distValue = -1;
+//    }
 
     serializedVariant.addProperty("id", variant.getId());
     serializedVariant.addProperty("generationNumber", generationNumber);
     serializedVariant.addProperty("selectionCount", variant.getSelectionCount());
     serializedVariant.addProperty("fitness", fitness);
-    serializedVariant.addProperty("levenshteinDistance", distValue);
+//    // 距離をJSON出力したい場合に追加
+//    serializedVariant.addProperty("levenshteinDistance", distValue);
     serializedVariant.addProperty("isBuildSuccess", variant.isBuildSucceeded());
     serializedVariant.addProperty("isSyntaxValid", variant.isSyntaxValid());
     serializedVariant.addProperty("sourceCode", variant.getGeneratedSourceCode().getProductAsts().size() != 0 ? variant.getGeneratedSourceCode().getProductAsts().get(0).getSourceCode() : "NaN");
