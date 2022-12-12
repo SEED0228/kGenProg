@@ -336,7 +336,7 @@ public class VariantStore {
   }
 
   public String getStandardDeviation3() {
-    String ret = "id,fit,dist,parentFit,parentDist,childFit,childDist\n";
+    String ret = "id,fit,dist,ccn,parentFit,parentDist,parentCCN,childFit,childDist,childCCN,mutationSize\n";
     for(Variant variant: allVariants) {
       if(variant.isBuildSucceeded()) {
         List<Variant> variants = variant.getHistoricalElement().getParents();
@@ -347,11 +347,21 @@ public class VariantStore {
           final double parentDist = variants.stream()
                   .mapToDouble(v -> v.getLevenshteinDistance() )
                   .min().orElse(0.);
+          final int parentCCN = variants.stream()
+                  .mapToInt(v -> v.getCyclicComplexityNumber() )
+                  .min().orElse(0);
           final double childFit = variant.getFitness().getNormalizedValue();
           final double childDist = variant.getLevenshteinDistance();
+          final int childCCN = variant.getCyclicComplexityNumber();
           final double fit = childFit - parentFit;
           final double dist = childDist - parentDist;
-          ret += variant.getId() + "," + fit + "," + dist + "," + parentFit + "," + parentDist + "," + childFit + "," + childDist + "," + "\n";
+          final int ccn = childCCN - parentCCN;
+          final int mutationSize = variant.getGene().getBases().size();
+
+          ret += variant.getId() + "," + fit + "," + dist + "," + ccn + "," +
+                  parentFit + "," + parentDist + "," + parentCCN + "," +
+                  childFit + "," + childDist + "," + childCCN + "," +
+                  mutationSize + "\n";
         }
       }
     }

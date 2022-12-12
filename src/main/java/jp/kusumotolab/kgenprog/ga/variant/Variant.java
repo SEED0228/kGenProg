@@ -1,6 +1,9 @@
 package jp.kusumotolab.kgenprog.ga.variant;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +18,8 @@ import jp.kusumotolab.kgenprog.project.GeneratedSourceCode;
 import jp.kusumotolab.kgenprog.project.ProductSourcePath;
 import jp.kusumotolab.kgenprog.project.test.EmptyTestResults;
 import jp.kusumotolab.kgenprog.project.test.TestResults;
+
+import static java.lang.Integer.parseInt;
 
 /**
  * 各個体に関する様々な情報を保持するクラス
@@ -226,15 +231,50 @@ public class Variant {
     return prev[ s2.length ];
   }
 
+  public int getCyclicComplexityNumber() {
+    int ccn = 0;
+    try {
+      if(isBuildSucceeded()) {
+        for(GeneratedAST<ProductSourcePath> generatedAST: getGeneratedSourceCode().getProductAsts()) {
+          File file = new File("check.java");
+          FileWriter fileWriter = new FileWriter(file);
+          fileWriter.write(generatedAST.getSourceCode());
+          fileWriter.close();
+          Thread.sleep(300);
+          ProcessBuilder pb = new ProcessBuilder("lizard", "-f", "list.txt", "-o", "check.csv");
+          pb.start();
+          Thread.sleep(300);
+          List<String> lines = Files.readAllLines(Path.of("check.csv"), Charset.forName("UTF-8"));
+          for (int i = 1; i < lines.size(); i++) {
+            String[] data = lines.get(i).split(",");
+            if (data.length > 2) {
+              // 読み込んだCSVファイルの内容を出力
+              ccn += parseInt(data[1]);
+            }
+          }
+        }
+      }
+      else {
+        ccn = -1;
+      }
+    } catch(IOException e) {
+      ccn = -1;
+    } catch (InterruptedException e) {
+      ccn = -1;
+    }
+    System.out.println( id+","+ccn);
+    return ccn;
+  }
+
   public int getLevenshteinDistance() {
     int distValue = 0;
     if(isBuildSucceeded()) {
       for(GeneratedAST<ProductSourcePath> generatedAST: getGeneratedSourceCode().getProductAsts()) {
         try {
           // 通常時
-//          String ans = "ans/";
+          String ans = "ans/";
           // real bug
-          String ans = "ans/example/real-bugs/Math73/";
+//          String ans = "ans/example/real-bugs/Math73/";
           String code = Files.readString(Path.of(ans + Paths.get(generatedAST.getSourcePath().toString())));
           distValue += levenshteinDistance(generatedAST.getSourceCode(), code);
         } catch(IOException ex) {
@@ -245,7 +285,6 @@ public class Variant {
     else {
       distValue = -1;
     }
-    System.out.println(distValue);
     return distValue;
   }
 }
