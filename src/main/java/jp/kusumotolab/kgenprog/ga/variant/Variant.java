@@ -10,6 +10,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import jp.kusumotolab.kgenprog.OrdinalNumber;
 import jp.kusumotolab.kgenprog.fl.Suspiciousness;
 import jp.kusumotolab.kgenprog.ga.validation.Fitness;
@@ -196,7 +199,7 @@ public class Variant {
     return variants;
   }
 
-  private static int levenshteinDistance( String s1, String s2 ) {
+  public static int levenshteinDistance( String s1, String s2 ) {
     return dist( s1.toCharArray(), s2.toCharArray() );
   }
 
@@ -279,6 +282,92 @@ public class Variant {
           distValue += levenshteinDistance(generatedAST.getSourceCode(), code);
         } catch(IOException ex) {
           ex.printStackTrace();
+        }
+      }
+    }
+    else {
+      distValue = -1;
+    }
+    return distValue;
+  }
+
+  public int getCyclicComplexityNumber2(Map<String, Integer> map) {
+    int ccn = 0;
+    try {
+      if(isBuildSucceeded()) {
+        List<String> changedSourcePaths = getGene()
+                .getBases()
+                .stream()
+                .map(b -> b.getTargetLocation().getSourcePath().toString())
+                .collect(Collectors.toList()); ;
+        for(GeneratedAST<ProductSourcePath> generatedAST: getGeneratedSourceCode().getProductAsts()) {
+          String path = generatedAST.getSourcePath().toString();
+
+          if(!changedSourcePaths.contains(path) && map.containsKey(path)) {
+            ccn += map.get(path);
+            System.out.println("nct: " + path);
+          }
+          else {
+            Thread.sleep(300);
+            File file = new File("check.java");
+            FileWriter fileWriter = new FileWriter(file);
+            fileWriter.write(generatedAST.getSourceCode());
+            fileWriter.close();
+            Thread.sleep(300);
+            ProcessBuilder pb = new ProcessBuilder("lizard", "-f", "list.txt", "-o", "check.csv");
+            pb.start();
+            Thread.sleep(300);
+            List<String> lines = Files.readAllLines(Path.of("check.csv"), Charset.forName("UTF-8"));
+            for (int i = 1; i < lines.size(); i++) {
+              String[] data = lines.get(i).split(",");
+              if (data.length > 2) {
+                // 読み込んだCSVファイルの内容を出力
+                ccn += parseInt(data[1]);
+                System.out.println("ct: " + path);
+              }
+            }
+          }
+        }
+      }
+      else {
+        ccn = -1;
+      }
+    } catch(IOException e) {
+      ccn = -1;
+    } catch (InterruptedException e) {
+      ccn = -1;
+    }
+    System.out.println( id+","+ccn);
+    return ccn;
+  }
+
+  public int getLevenshteinDistance2(Map<String, Integer> map) {
+    int distValue = 0;
+    if(isBuildSucceeded()) {
+      List<String> changedSourcePaths = getGene()
+              .getBases()
+              .stream()
+              .map(b -> b.getTargetLocation().getSourcePath().toString())
+              .collect(Collectors.toList()); ;
+      for(GeneratedAST<ProductSourcePath> generatedAST: getGeneratedSourceCode().getProductAsts()) {
+        String path = generatedAST.getSourcePath().toString();
+        System.out.println(path);
+        if(!changedSourcePaths.contains(path) && map.containsKey(path)) {
+          distValue += map.get(path);
+          System.out.println("nct:" + path);
+        }
+        else {
+          try {
+            // 通常時
+//            String ans = "ans/";
+            // real bug
+            String ans = "ans/example/real-bugs/Math73/";
+            String code = Files.readString(Path.of(ans + Paths.get(generatedAST.getSourcePath().toString())));
+            distValue += levenshteinDistance(generatedAST.getSourceCode(), code);
+            System.out.println("ct: " + path);
+          } catch(IOException ex) {
+            ex.printStackTrace();
+          }
         }
       }
     }

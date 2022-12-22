@@ -1,5 +1,12 @@
 package jp.kusumotolab.kgenprog.ga.variant;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -16,9 +23,13 @@ import jp.kusumotolab.kgenprog.ga.validation.Fitness;
 import jp.kusumotolab.kgenprog.ga.validation.SourceCodeValidation.Input;
 import jp.kusumotolab.kgenprog.output.Patch;
 import jp.kusumotolab.kgenprog.output.PatchGenerator;
+import jp.kusumotolab.kgenprog.project.GeneratedAST;
 import jp.kusumotolab.kgenprog.project.GeneratedSourceCode;
+import jp.kusumotolab.kgenprog.project.ProductSourcePath;
 import jp.kusumotolab.kgenprog.project.test.EmptyTestResults;
 import jp.kusumotolab.kgenprog.project.test.TestResults;
+
+import static java.lang.Integer.parseInt;
 
 /**
  * kGenProg が生成する Variant を生成したり保持したりするクラス
@@ -336,6 +347,42 @@ public class VariantStore {
   }
 
   public String getStandardDeviation3() {
+    Variant initialVariant = getInitialVariant();
+    Map<String, Integer> CCNMap = new HashMap<>();
+    Map<String, Integer> distMap = new HashMap<>();
+    for(GeneratedAST<ProductSourcePath> generatedAST: initialVariant.getGeneratedSourceCode().getProductAsts()) {
+      String sourcePath = generatedAST.getSourcePath().toString();
+      // 元の編集距離の算出
+      try {
+        // 通常時
+//        String ans = "ans/";
+        // real bug
+        String ans = "ans/example/real-bugs/Math73/";
+        String code = Files.readString(Path.of(ans + Paths.get(generatedAST.getSourcePath().toString())));
+        distMap.put(sourcePath, Variant.levenshteinDistance(generatedAST.getSourceCode(), code));
+        File file = new File("check.java");
+        FileWriter fileWriter = new FileWriter(file);
+        fileWriter.write(generatedAST.getSourceCode());
+        fileWriter.close();
+        Thread.sleep(300);
+        ProcessBuilder pb = new ProcessBuilder("lizard", "-f", "list.txt", "-o", "check.csv");
+        pb.start();
+        Thread.sleep(300);
+        List<String> lines = Files.readAllLines(Path.of("check.csv"), Charset.forName("UTF-8"));
+        for (int i = 1; i < lines.size(); i++) {
+          String[] data = lines.get(i).split(",");
+          if (data.length > 2) {
+            // 読み込んだCSVファイルの内容を出力
+            CCNMap.put(sourcePath, parseInt(data[1]));
+          }
+        }
+        System.out.println(sourcePath);
+      } catch(IOException ex) {
+        ex.printStackTrace();
+      } catch (InterruptedException ex) {
+        ex.printStackTrace();
+      }
+    }
     String ret = "id,fit,dist,ccn,parentFit,parentDist,parentCCN,childFit,childDist,childCCN,mutationSize\n";
     for(Variant variant: allVariants) {
       if(variant.isBuildSucceeded()) {
@@ -345,14 +392,14 @@ public class VariantStore {
                   .mapToDouble(v -> v.getFitness().getNormalizedValue())
                   .max().orElse(0.);
           final double parentDist = variants.stream()
-                  .mapToDouble(v -> v.getLevenshteinDistance() )
+                  .mapToDouble(v -> v.getLevenshteinDistance2(distMap) )
                   .min().orElse(0.);
           final int parentCCN = variants.stream()
-                  .mapToInt(v -> v.getCyclicComplexityNumber() )
+                  .mapToInt(v -> v.getCyclicComplexityNumber2(CCNMap) )
                   .min().orElse(0);
           final double childFit = variant.getFitness().getNormalizedValue();
-          final double childDist = variant.getLevenshteinDistance();
-          final int childCCN = variant.getCyclicComplexityNumber();
+          final double childDist = variant.getLevenshteinDistance2(distMap);
+          final int childCCN = variant.getCyclicComplexityNumber2(CCNMap);
           final double fit = childFit - parentFit;
           final double dist = childDist - parentDist;
           final int ccn = childCCN - parentCCN;
